@@ -1,0 +1,265 @@
+CREATE TABLE product_groups (
+	group_id serial PRIMARY KEY,
+	group_name VARCHAR (255) NOT NULL
+);
+
+CREATE TABLE products (
+	product_id serial PRIMARY KEY,
+	product_name VARCHAR (255) NOT NULL,
+	price DECIMAL (11, 2),
+	group_id INT NOT NULL,
+	FOREIGN KEY (group_id) REFERENCES product_groups (group_id)
+);
+
+INSERT INTO product_groups (group_name)
+VALUES
+	('Smartphone'),
+	('Laptop'),
+	('Tablet');
+
+INSERT INTO products (product_name, group_id,price)
+VALUES
+	('Microsoft Lumia', 1, 200),
+	('HTC One', 1, 400),
+	('Nexus', 1, 500),
+	('iPhone', 1, 900),
+	('HP Elite', 2, 1200),
+	('Lenovo Thinkpad', 2, 700),
+	('Sony VAIO', 2, 700),
+	('Dell Vostro', 2, 800),
+	('iPad', 3, 700),
+	('Kindle Fire', 3, 150),
+	('Samsung Galaxy Tab', 3, 200);
+
+SELECT product_name,
+       group_name,
+       price,
+       RANK() OVER (PARTITION BY group_name
+                    ORDER BY price)
+FROM products
+INNER JOIN product_groups USING (group_id);
+
+    product_name    | group_name |  price  | rank 
+--------------------+------------+---------+------
+ Sony VAIO          | Laptop     |  700.00 |    1
+ Lenovo Thinkpad    | Laptop     |  700.00 |    1
+ Dell Vostro        | Laptop     |  800.00 |    3
+ HP Elite           | Laptop     | 1200.00 |    4
+ Microsoft Lumia    | Smartphone |  200.00 |    1
+ HTC One            | Smartphone |  400.00 |    2
+ Nexus              | Smartphone |  500.00 |    3
+ iPhone             | Smartphone |  900.00 |    4
+ Kindle Fire        | Tablet     |  150.00 |    1
+ Samsung Galaxy Tab | Tablet     |  200.00 |    2
+ iPad               | Tablet     |  700.00 |    3
+(11 строк)
+
+
+SELECT product_name,
+       group_name,
+       price,
+       dense_rank() OVER (PARTITION BY group_name
+                          ORDER BY price)
+FROM products
+INNER JOIN product_groups USING (group_id);
+
+    product_name    | group_name |  price  | dense_rank 
+--------------------+------------+---------+------------
+ Sony VAIO          | Laptop     |  700.00 |          1
+ Lenovo Thinkpad    | Laptop     |  700.00 |          1
+ Dell Vostro        | Laptop     |  800.00 |          2
+ HP Elite           | Laptop     | 1200.00 |          3
+ Microsoft Lumia    | Smartphone |  200.00 |          1
+ HTC One            | Smartphone |  400.00 |          2
+ Nexus              | Smartphone |  500.00 |          3
+ iPhone             | Smartphone |  900.00 |          4
+ Kindle Fire        | Tablet     |  150.00 |          1
+ Samsung Galaxy Tab | Tablet     |  200.00 |          2
+ iPad               | Tablet     |  700.00 |          3
+(11 строк)
+
+
+SELECT product_name,
+       group_name,
+       price,
+       first_value (price) OVER (PARTITION BY group_name
+                                 ORDER BY price) AS lowest_price_per_group
+FROM products
+INNER JOIN product_groups USING (group_id);
+
+    product_name    | group_name |  price  | lowest_price_per_group 
+--------------------+------------+---------+------------------------
+ Sony VAIO          | Laptop     |  700.00 |                 700.00
+ Lenovo Thinkpad    | Laptop     |  700.00 |                 700.00
+ Dell Vostro        | Laptop     |  800.00 |                 700.00
+ HP Elite           | Laptop     | 1200.00 |                 700.00
+ Microsoft Lumia    | Smartphone |  200.00 |                 200.00
+ HTC One            | Smartphone |  400.00 |                 200.00
+ Nexus              | Smartphone |  500.00 |                 200.00
+ iPhone             | Smartphone |  900.00 |                 200.00
+ Kindle Fire        | Tablet     |  150.00 |                 150.00
+ Samsung Galaxy Tab | Tablet     |  200.00 |                 150.00
+ iPad               | Tablet     |  700.00 |                 150.00
+(11 строк)
+
+
+SELECT product_name,
+       group_name,
+       price,
+       last_value (price) OVER (PARTITION BY group_name
+                                ORDER BY price) AS highest_price_per_group
+FROM products
+INNER JOIN product_groups USING (group_id);
+
+    product_name    | group_name |  price  | highest_price_per_group 
+--------------------+------------+---------+-------------------------
+ Sony VAIO          | Laptop     |  700.00 |                  700.00
+ Lenovo Thinkpad    | Laptop     |  700.00 |                  700.00
+ Dell Vostro        | Laptop     |  800.00 |                  800.00
+ HP Elite           | Laptop     | 1200.00 |                 1200.00
+ Microsoft Lumia    | Smartphone |  200.00 |                  200.00
+ HTC One            | Smartphone |  400.00 |                  400.00
+ Nexus              | Smartphone |  500.00 |                  500.00
+ iPhone             | Smartphone |  900.00 |                  900.00
+ Kindle Fire        | Tablet     |  150.00 |                  150.00
+ Samsung Galaxy Tab | Tablet     |  200.00 |                  200.00
+ iPad               | Tablet     |  700.00 |                  700.00
+(11 строк)
+
+
+SELECT product_name,
+       group_name,
+       price,
+       last_value (price) OVER (PARTITION BY group_name) AS highest_price_per_group
+FROM products
+INNER JOIN product_groups USING (group_id);
+
+    product_name    | group_name |  price  | highest_price_per_group 
+--------------------+------------+---------+-------------------------
+ HP Elite           | Laptop     | 1200.00 |                  800.00
+ Lenovo Thinkpad    | Laptop     |  700.00 |                  800.00
+ Sony VAIO          | Laptop     |  700.00 |                  800.00
+ Dell Vostro        | Laptop     |  800.00 |                  800.00
+ Microsoft Lumia    | Smartphone |  200.00 |                  900.00
+ HTC One            | Smartphone |  400.00 |                  900.00
+ Nexus              | Smartphone |  500.00 |                  900.00
+ iPhone             | Smartphone |  900.00 |                  900.00
+ iPad               | Tablet     |  700.00 |                  200.00
+ Kindle Fire        | Tablet     |  150.00 |                  200.00
+ Samsung Galaxy Tab | Tablet     |  200.00 |                  200.00
+(11 строк)
+
+
+SELECT product_name,
+       group_name,
+       price,
+       last_value (price) OVER (PARTITION BY group_name
+                                ORDER BY price RANGE BETWEEN UNBOUNDED preceding AND UNBOUNDED FOLLOWING) AS highest_price_per_group
+FROM products
+INNER JOIN product_groups USING (group_id);
+
+    product_name    | group_name |  price  | highest_price_per_group 
+--------------------+------------+---------+-------------------------
+ Sony VAIO          | Laptop     |  700.00 |                 1200.00
+ Lenovo Thinkpad    | Laptop     |  700.00 |                 1200.00
+ Dell Vostro        | Laptop     |  800.00 |                 1200.00
+ HP Elite           | Laptop     | 1200.00 |                 1200.00
+ Microsoft Lumia    | Smartphone |  200.00 |                  900.00
+ HTC One            | Smartphone |  400.00 |                  900.00
+ Nexus              | Smartphone |  500.00 |                  900.00
+ iPhone             | Smartphone |  900.00 |                  900.00
+ Kindle Fire        | Tablet     |  150.00 |                  700.00
+ Samsung Galaxy Tab | Tablet     |  200.00 |                  700.00
+ iPad               | Tablet     |  700.00 |                  700.00
+(11 строк)
+
+
+
+SELECT product_name,
+       group_name,
+       price,
+       lag (price, 1) OVER (PARTITION BY group_name
+                            ORDER BY price) AS prev_price,
+                           price - lag(price, 1) OVER (PARTITION BY group_name
+                                                       ORDER BY price) AS cur_prev_diff
+FROM products
+INNER JOIN product_groups USING (group_id);
+
+
+SELECT product_name,
+       group_name,
+       price,
+       lead (price, 1) OVER (PARTITION BY group_name
+                             ORDER BY price) AS next_price,
+                            price - lead(price, 1) OVER (PARTITION BY group_name
+                                                         ORDER BY price) AS cer_next_diff
+FROM products
+INNER JOIN product_groups USING (group_id);
+
+
+SELECT date_trunc('day', '2021-01-14'::TIMESTAMP);
+
+     date_trunc      
+---------------------
+ 2021-01-14 00:00:00
+(1 строка)
+
+
+SELECT now();
+
+              now              
+-------------------------------
+ 2021-01-14 10:31:39.024428+03
+(1 строка)
+
+SELECT date_trunc('day', now());
+
+       date_trunc       
+------------------------
+ 2021-01-14 00:00:00+03
+(1 строка)
+
+                                                                  ^
+SELECT md5(random()::text);
+
+               md5                
+----------------------------------
+ 42c2e5e4fa47677c85d619239dde89f5
+(1 строка)
+
+
+CREATE TABLE messages (
+id serial PRIMARY KEY,
+message varchar (100), 
+date TIMESTAMP WITH TIME ZONE
+);
+
+INSERT INTO messages
+SELECT id,
+       md5(random()::text),
+       TIMESTAMP '2021-01-01 00:00:00' + random() * (TIMESTAMP '2021-01-01 00:00:00' - TIMESTAMP '2021-01-07 23:59:59')
+FROM generate_series(100, 150) AS t(id);INSERT 0 51
+
+
+SELECT date_trunc('day', dd)::date,
+  (SELECT message
+   FROM messages
+   WHERE date>=dd
+   ORDER BY date
+   LIMIT 1)
+FROM generate_series ('2020-12-20'::TIMESTAMP, '2020-12-28'::TIMESTAMP, '1 day'::interval) dd;
+
+ date_trunc |             message              
+------------+----------------------------------
+ 2020-12-20 | 18d09503995ffe73338080e2cce94774
+ 2020-12-21 | 18d09503995ffe73338080e2cce94774
+ 2020-12-22 | 18d09503995ffe73338080e2cce94774
+ 2020-12-23 | 18d09503995ffe73338080e2cce94774
+ 2020-12-24 | 18d09503995ffe73338080e2cce94774
+ 2020-12-25 | 18d09503995ffe73338080e2cce94774
+ 2020-12-26 | 4c2063164a70931c8226d18070cd6dbe
+ 2020-12-27 | 3b93afe895dfb4999a9c187b83f90ad9
+ 2020-12-28 | 35d18f5ee389a2837b57c8945023357e
+(9 строк)
+
+
