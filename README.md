@@ -1,1 +1,1 @@
-# sql_training
+# PostgreSQL training
